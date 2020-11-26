@@ -1,112 +1,94 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Update Dog info that is rendered in fields. Do PATCH resquest to Submit updated dog data in table and persist to table.
-
+  const baseURL = 'http://localhost:3000'
 
   // DOM ELEMENTS
-  const baseURL = 'http://localhost:3000'
-  const tableHeader = document.querySelector(".blue")
-  const editDogs = document.querySelector("#container")
-
-  // variables to render dog info to Edit Existing Dog fields
-  const dogName = document.querySelector("[name='name']")
-  const dogBreed = document.querySelector("[name='breed']")
-  const dogSex = document.querySelector("[name='sex']")
-
+  const tableHeader = document.querySelector("table .blue")
+  const dogNameField = document.querySelector("input[name='name']")
+  const dogBreedField = document.querySelector("input[name='breed']")
+  const dogSexField = document.querySelector("input[name='sex']")
   const dogForm = document.querySelector("#dog-form")
-  // console.log(dogForm)
 
-  // RENDERS
-  const renderDog = (dogObj) => {
-    const tableRow = document.createElement("tr")
-    tableRow.dataset.id = dogObj.id
-    tableRow.innerHTML = `
-  <td>${dogObj.name}</td> <td>${dogObj.breed}</td> <td>${dogObj.sex}</td> <td><button>Edit</button></td>`
-    tableHeader.append(tableRow)
+  // STATE
+  let dogId;
+
+
+  // RENDER
+
+  const renderDogTable = (dogObj) => {
+    // console.log(dogObj)
+    const tr = document.createElement("tr")
+    tr.innerHTML = `
+    <td class='dogName'>${dogObj.name}</td> <td class='dogBreed'>${dogObj.breed}</td> <td class='dogSex'>${dogObj.sex}</td> <td><button>Edit</button></td>`
+    tr.dataset.id = dogObj.id
+    tableHeader.append(tr)
   }
 
-  const renderDogInField = dogObj => {
-    dogName.value = dogObj.name
-    dogBreed.value = dogObj.breed
-    dogSex.value = dogObj.sex
-    dogForm.dataset.id = dogObj.id
+
+  // *** still need to find the correct dog row to update
+  const updateSingleDog = (dogObj, dogId) => {
+    
+    tr.innerHTML = ""
+    tr.innerHTML = `
+    <td class='dogName'>${dogObj.name}</td> <td class='dogBreed'>${dogObj.breed}</td> <td class='dogSex'>${dogObj.sex}</td> <td><button>Edit</button></td>`
+    tr.dataset.id = dogId
   }
 
 
   // EVENT HANDLERS
-  const showDog = (event) => {
-
+  const renderDogToEdit = (event) => {
     if (event.target.matches("button")) {
       const tr = event.target.closest("tr")
-      const id = tr.dataset.id
-      // console.log(id)
 
-      fetch(`${baseURL}/dogs/${id}`)
-        .then(response => response.json())
-        .then(dogObj => {
-          renderDogInField(dogObj)
-          // console.log(dogObj)
-        })
+      dogNameField.value = tr.querySelector(".dogName").textContent
+      dogBreedField.value = tr.querySelector(".dogBreed").textContent
+      dogSexField.value = tr.querySelector(".dogSex").textContent
+      dogForm.dataset.id = tr.dataset.id
     }
   }
 
-  // const renderUpdatedDog = (dogObj) => {
-  //   const tableRow = document.querySelector("tr")
-  //   tableRow.dataset.id = dogObj.id
-  //   tableRow.innerHTML = `
-  // <td>${dogObj.name}</td> <td>${dogObj.breed}</td> <td>${dogObj.sex}</td> <td><button>Edit</button></td>`
-  // }
-
-  const updateDog = (event) => {
+  const editDog = (event) => {
     event.preventDefault()
-    if (event.target.matches("#dog-form")) {
-      console.log(event.target)
-      const id = event.target.dataset.id
+    const id = event.target.dataset.id
 
-      const updatedDog = {
-        name: dogName.value,
-        breed: dogBreed.value,
-        sex: dogSex.value
-      }
-
-      fetch(`${baseURL}/dogs/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(updatedDog),
-      })
-        .then(response => response.json())
-        .then(updatedDog => {
-          renderDog(updatedDog)
-          console.log('Success:', updatedDog);
-        })
-
-        tableHeader.innerHTML = ""
-
-        initialize()
-
+    const updatedDog = {
+      name: event.target.name.value,
+      breed: event.target.breed.value,
+      sex: event.target.sex.value
     }
+
+
+    fetch(`${baseURL}/dogs/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedDog),
+    })
+      .then(response => response.json())
+      .then(updatedDogObj => {
+        updateSingleDog(updatedDogObj)
+        console.log('Success:', updatedDogObj);
+      })
   }
 
 
   // EVENT LISTENERS
-
-  editDogs.addEventListener("click", showDog)
-  dogForm.addEventListener("submit", updateDog)
-
+  tableHeader.addEventListener("click", renderDogToEdit)
+  dogForm.addEventListener("submit", editDog)
 
   // INITIALIZE
-  const initialize = () => {
+  const initializeDogs = () => {
     fetch(`${baseURL}/dogs`)
       .then(response => response.json())
-      .then(dogsArray => {
-        dogsArray.forEach(dogObj => renderDog(dogObj))
-        // console.log(dogsArray)
+      .then(dogArray => {
+        dogArray.forEach(dogObj => renderDogTable(dogObj))
+        // console.log(dogArray)
       })
   }
 
-  initialize()
+  initializeDogs()
 
 })
+
+
